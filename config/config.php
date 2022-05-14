@@ -49,6 +49,18 @@ return [
     */
     'signin_attribute'          => env('AWS_COGNITO_SIGNIN_ATTRIBUTE', 'email'),
     'signin_password_attribute' => env('AWS_COGNITO_SIGNIN_PASSWORD_ATTRIBUTE', 'password'),
+    
+    /*
+    |--------------------------------------------------------------------------
+    | AWS Cognito for Allowing the App Client Secret
+    |--------------------------------------------------------------------------
+    |
+    | If you have created the aws cognito, and don't plan to set the client
+    | secret, then use this configuration to help. By default we expect the
+    | client secret is configured and available.
+    |
+    */
+    'app_client_secret_allow' => env('AWS_COGNITO_CLIENT_SECRET_ALLOW', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -160,4 +172,38 @@ return [
     |
     */
     'force_password_auto_update_api' => env('AWS_COGNITO_FORCE_PASSWORD_AUTO_UPDATE_API', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Allow forgot password to resend the request based on Cognito User Status
+    |--------------------------------------------------------------------------
+    |
+    | This option enables the user to request for password from the AWS Cognito 
+    | User Pool, where the user is not with confirmed status.
+    |
+    */
+    'allow_forgot_password_resend' => env('AWS_COGNITO_ALLOW_FORGOT_PASSWORD_RESEND', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Allow new user email address to be verified during invitation
+    |--------------------------------------------------------------------------
+    |
+    | This option enables the user email address to be tagged as verified during
+    | the to invitation for the new user. The default value is set to true.
+    |
+    */
+    'force_new_user_email_verified' => env('AWS_COGNITO_FORCE_NEW_USER_EMAIL_VERIFIED', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Set the parameters for the new user message action
+    |--------------------------------------------------------------------------
+    |
+    | This option enables the new user message action. You can set the value to
+    | SUPPRESS in order to stop the invitation mails from being sent. The default 
+    | value is set to null.
+    |
+    */
+    'new_user_message_action' => env('AWS_COGNITO_NEW_USER_MESSAGE_ACTION', null),
 ];

@@ -1,4 +1,4 @@
-<img src="https://www.ellaisys.com/wp-content/uploads/2020/11/eis_aws_cognito.png" width="100%" alt="EllaiSys AWS Cloud Capability"/>
+<img src="https://cdn.ellaisys.com/aws-cognito/banner.png" width="100%" alt="EllaiSys AWS Cloud Capability"/>
 
 # Laravel Package to manage Web and API authentication with AWS Cognito
 AWS Cognito package using the AWS SDK for PHP
@@ -23,7 +23,7 @@ We decided to use it and contribute it to the community as a package, that encou
 - Login
 - Remember Me Cookie
 - Single Sign On
-- Forgot Password
+- Forgot Password (Resend - configurable)
 - User Deletion
 - Edit User Attributes
 - Reset User Password
@@ -31,6 +31,21 @@ We decided to use it and contribute it to the community as a package, that encou
 - Easy API Token handling (uses the cache driver)
 - DynamoDB support for Web Sessions and API Tokens (useful for server redundency OR multiple containers)
 - Easy configuration of Token Expiry (Manage using the cognito console, no code or configurations needed)
+- Support for App Client without Secret **(NEW Feature)**
+
+## Compatability
+
+|PHP Version|Support|
+|-|-|
+|7.4|Yes|
+|8.0|Untested|
+|8.1|Untested|
+
+|Laravel Version|Support|
+|-|-|
+|7.x|Yes|
+|8.x|Yes|
+|9.x|Untested|
 
 ## Installation
 
@@ -159,6 +174,17 @@ Any additional registration data you have, for example `firstname`, `lastname` n
 [cognito.php](/config/cognito.php) cognito_user_fields config to be pushed to Cognito. Otherwise they are only stored locally 
 and are not available if you want to use Single Sign On's.*
 
+## Forgot password with resend option
+
+In case the user has not activated the account, AWS Cognito as a default feature does not allow user of use the forgot password feature. We have introduced the AWS documented feature that allows the password to be resent.
+
+We have made this configurable for the developers so that they can use it as per the business requirement. The configuration takes a boolean value. Default is true (allows resend of forgot password)
+
+```php
+
+    AWS_COGNITO_ALLOW_FORGOT_PASSWORD_RESEND=true
+
+```
 
 ## Middleware configuration for API Routes
 In case you are using this library as API driver, you can register the middleware into the kernal.php in the $routeMiddleware
@@ -236,6 +262,22 @@ We have made is very easy for anyone to use the default behaviour.
 ```
 
 5. You don't need to turn off Cognito to send you emails. We rather propose the use of AWS Cognito or AWS SMS mailers, such that use credentials are always secure.
+
+6. In case you want to suppress the mails to be sent to the new users, you can configure the parameter given below to skip welcome mails to new user registration. Default configuration shall send the welcome email.
+
+```php
+
+    AWS_COGNITO_NEW_USER_MESSAGE_ACTION="SUPPRESS"
+
+```
+
+7. The configuration given below allows the new user's email address to be auto marked as verified. The default configuration
+
+```php
+
+    AWS_COGNITO_FORCE_NEW_USER_EMAIL_VERIFIED=false
+
+```
 
 ## User Authentication
 
@@ -442,6 +484,15 @@ However, if you have an API based implementation, and want to automatically auth
 
 ```
 
+## Support for App Client without Secret enabled
+
+The library now supports where the AWS configuration of App Client with the Client Secret set to disabled. Use the below configuration into the environment file to enable/disable this. The default is marked as enable (i.e. we expect the App Client Secret to be enabled in AWS Cognito configuration)
+
+```php
+
+   AWS_COGNITO_CLIENT_SECRET_ALLOW=false
+
+```
 
 ## Changelog
 
@@ -451,7 +502,21 @@ Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed re
 
 If you discover any security related issues, please email [support@ellaisys.com](mailto:support@ellaisys.com) and also add it to the issue tracker.
 
-## Credits
+## Roadmap
+
+https://github.com/ellaisys/aws-cognito/wiki/RoadMap
+
+## How to contribute
+
+- Star this project on GitHub.
+- Report bugs or suggest features by creating new issues or adding comments to issues
+- Submit pull requests
+- Spread the word by blogging about SimplCommerce or sharing it on social networks
+- Donate to us
+
+## Credits & Contributors
+
+This project exists thanks to all the people who contribute.
 
 - [EllaiSys Team](https://github.com/ellaisys)
 - [GitHub Contributors](https://github.com/ellaisys/aws-cognito/graphs/contributors)
