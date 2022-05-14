@@ -21,16 +21,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | AWS configurations
-    |--------------------------------------------------------------------------
-    |
-    | You can choose to have users sign in with an email address, phone number, username or preferred username
-    |
-    */
-    'signin_attribute' => env('AWS_COGNITO_SIGNIN_ATTRIBUTE', 'email'),
-
-    /*
-    |--------------------------------------------------------------------------
     | AWS Cognito configurations
     |--------------------------------------------------------------------------
     |
@@ -47,6 +37,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application signin attributes
+    |--------------------------------------------------------------------------
+    |
+    | This option allows the user to customize the signin attibutes for 
+    | authentication/login purpose. You can choose to have sign in with 
+    | an email address, phone number, username or other attributes. Also
+    | the password field can be replaced with something else like secret, 
+    | etc.
+    |
+    */
+    'signin_attribute'          => env('AWS_COGNITO_SIGNIN_ATTRIBUTE', 'email'),
+    'signin_password_attribute' => env('AWS_COGNITO_SIGNIN_PASSWORD_ATTRIBUTE', 'password'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Cognito Fields & DB Mapping
     |--------------------------------------------------------------------------
     |
@@ -54,7 +59,7 @@ return [
     | updated. The array value is a mapping with DB model or Request data.
     |
     */
-    'cognito_user_fields'   => [
+    'cognito_user_fields' => [
         'name' => 'name',
         'email' => 'email',
     ],
@@ -84,7 +89,7 @@ return [
     'delete_user'                   => env('AWS_COGNITO_DELETE_USER', false),
 
     // Package configurations
-    'sso_user_model'        => env('AWS_COGNITO_USER_MODEL', 'App\User'),
+    'sso_user_model'                => env('AWS_COGNITO_USER_MODEL', 'App\User'),
 
     /*
     |--------------------------------------------------------------------------
