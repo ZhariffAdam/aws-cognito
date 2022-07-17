@@ -328,18 +328,69 @@ class AwsCognitoClient
 
 
     /**
+     * Gets the user's groups from Cognito
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminListGroupsForUser.html
+     *
+     * @param string $username
+     * @return \Aws\Result
+     */
+    public function adminListGroupsForUser(string $username)
+    {
+        try {
+            $groups = $this->client->AdminListGroupsForUser([
+                    'UserPoolId' => $this->poolId, // REQUIRED
+                    'Username' => $username // REQUIRED
+                ]
+            );
+            return $groups;
+        } catch (CognitoIdentityProviderException $e) {
+            throw $e;
+        } //Try-catch ends
+
+        return false;
+    } //Function ends
+
+
+    /**
+     * Add a user to a given group
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminAddUserToGroup.html
+     *
+     * @param string $username
+     * @param string $groupname
+     * 
+     * @return bool
+     */
+    public function adminAddUserToGroup(string $username, string $groupname)
+    {
+        try {
+            $this->client->adminAddUserToGroup([
+                    'GroupName' => $groupname, // REQUIRED
+                    'UserPoolId' => $this->poolId, // REQUIRED
+                    'Username' => $username // REQUIRED
+                ]
+            );
+        } catch (CognitoIdentityProviderException $e) {
+            throw $e;
+        } //Try-catch ends
+
+        return true;
+    } //Function ends
+
+
+    /**
      * Register a user and send them an email to set their password.
      * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminCreateUser.html
      *
      * @param $username
+     * @param $password (optional) (default=null)
      * @param array $attributes
      * @param array $clientMetadata (optional)
      * @param string $messageAction (optional)
      * @return bool $isUserEmailForcedVerified (false)
      */
-    public function inviteUser(string $username, string $password=null, array $attributes = [], 
+    public function inviteUser(string $username, string $password=null, array $attributes = [],
                                array $clientMetadata=null, string $messageAction=null,
-                               bool $isUserEmailForcedVerified = false)
+                               bool $isUserEmailForcedVerified = false, string $groupname=null)
     {
         //Force validate email
         if ($attributes['email'] && $isUserEmailForcedVerified) {
@@ -376,6 +427,11 @@ class AwsCognitoClient
 
         try {
             $this->client->adminCreateUser($payload);
+
+            //Add user to the group
+            if (!empty($groupname)) {
+                $this->adminAddUserToGroup($username, $groupname);
+            } //End if
         } catch (CognitoIdentityProviderException $e) {
             if ($e->getAwsErrorCode() === self::USERNAME_EXISTS) {
                 return false;

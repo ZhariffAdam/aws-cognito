@@ -14,6 +14,7 @@ namespace Ellaisys\Cognito\Auth;
 use Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 
 use Ellaisys\Cognito\AwsCognitoClient;
@@ -30,6 +31,38 @@ trait AuthenticatesUsers
 {
 
     /**
+     * Pulls list of groups attached to a user in Cognito
+     *
+     * @param string $username
+     * @return mixed
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     */
+    protected function getAdminListGroupsForUser(string $username)
+    {
+        $groups = null;
+
+        try {
+            $result = app()->make(AwsCognitoClient::class)->adminListGroupsForUser($username);
+
+            if (!empty($result)) {
+                $groups = $result['Groups'];
+
+                if ((!empty($groups)) && is_array($groups)) {
+                    foreach ($groups as $key => &$value) {
+                        unset($value['UserPoolId']);
+                        unset($value['RoleArn']);
+                    } //Loop ends                    
+                } //End if
+            } //End if
+        } catch(Exception $e) {
+            Log::error('AuthenticatesUsers:getAdminListGroupsForUser:Exception');
+        } //Try-catch ends
+
+        return $groups;
+    } //End if
+
+    
+    /**
      * Attempt to log the user into the application.
      *
      * @param  \Illuminate\Support\Collection  $request
@@ -37,7 +70,7 @@ trait AuthenticatesUsers
      * @param  \string  $paramUsername (optional)
      * @param  \string  $paramPassword (optional)
      * @param  \bool  $isJsonResponse (optional)
-     * 
+     *
      * @return mixed
      */
     protected function attemptLogin(Collection $request, string $guard='web', string $paramUsername='email', string $paramPassword='password', bool $isJsonResponse=false)
@@ -47,8 +80,8 @@ trait AuthenticatesUsers
 
             //Generate credentials array
             $credentials = [
-                $paramUsername => $request[$paramUsername], 
-                $paramPassword => $request[$paramPassword]
+                $keyUsername => $request[$paramUsername],
+                $keyPassword => $request[$paramPassword]
             ];
 
             //Authenticate User
@@ -59,12 +92,12 @@ trait AuthenticatesUsers
 
             if (config('cognito.add_missing_local_user_sso')) {
                 $response = $this->createLocalUser($credentials, $keyPassword);
-                
+
                 if ($response) {
                     return $response;
                 } //End if
             } //End if
-            
+
             return $this->sendFailedLoginResponse($request, $e, $isJsonResponse, $paramUsername);
         } catch (CognitoIdentityProviderException $e) {
             Log::error('AuthenticatesUsers:attemptLogin:CognitoIdentityProviderException');
@@ -87,15 +120,16 @@ trait AuthenticatesUsers
     protected function createLocalUser($credentials, string $keyPassword='password')
     {
         $userModel = config('cognito.sso_user_model');
-        $user = $userModel::create($credentials->except($keyPassword));
-        
+        unset($credentials[$keyPassword]);
+        $user = $userModel::create($credentials);
+
         return $user;
     } //Function ends
 
 
     /**
      * Handle Failed Cognito Exception
-     * 
+     *
      * @param CognitoIdentityProviderException $exception
      */
     private function sendFailedCognitoResponse(CognitoIdentityProviderException $exception, bool $isJsonResponse=false, string $paramUsername='email')
@@ -108,7 +142,7 @@ trait AuthenticatesUsers
 
     /**
      * Handle Generic Exception
-     * 
+     *
      * @param  \Collection $request
      * @param  \Exception $exception
      */
@@ -121,8 +155,8 @@ trait AuthenticatesUsers
 
         if ($isJsonResponse) {
             return  response()->json([
-                'error' => 'cognito.validation.auth.failed', 
-                'message' => $message 
+                'error' => 'cognito.validation.auth.failed',
+                'message' => $message
             ], 400);
         } else {
             return redirect()
@@ -131,7 +165,7 @@ trait AuthenticatesUsers
                     $paramUsername => $message,
                 ]);
         } //End if
-        
+
         throw new HttpException(400, $message);
     } //Function ends
 
