@@ -25,6 +25,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Illuminate\Database\Eloquent\Model;
 
 use Ellaisys\Cognito\AwsCognitoClient;
+use Ellaisys\Cognito\AwsCognitoClaim;
 
 use Exception;
 use Ellaisys\Cognito\Exceptions\AwsCognitoException;
@@ -42,6 +43,7 @@ class CognitoSessionGuard extends SessionGuard implements StatefulGuard
      */
     protected $keyUsername;
 
+
     /**
      * @var AwsCognitoClient
      */
@@ -52,6 +54,12 @@ class CognitoSessionGuard extends SessionGuard implements StatefulGuard
      * @var Authentication Challenge
      */
     protected $challengeName;
+
+
+    /**
+     * @var AwsResult
+     */
+    protected $awsResult;
 
 
     /**
@@ -73,7 +81,9 @@ class CognitoSessionGuard extends SessionGuard implements StatefulGuard
         string $keyUsername = 'email'
     ) {
         $this->client = $client;
+        $this->awsResult = null;
         $this->keyUsername = $keyUsername;
+
         parent::__construct($name, $provider, $session, $request);
     }
 
@@ -89,6 +99,8 @@ class CognitoSessionGuard extends SessionGuard implements StatefulGuard
         $result = $this->client->authenticate($credentials[$this->keyUsername], $credentials['password']);
 
         if (!empty($result) && $result instanceof AwsResult) {
+            //Set value into global param
+            $this->awsResult = $result;
 
             if (isset($result['ChallengeName']) && 
                 in_array($result['ChallengeName'], config('cognito.forced_challenge_names'))) 
@@ -131,12 +143,14 @@ class CognitoSessionGuard extends SessionGuard implements StatefulGuard
                 $this->login($user, $remember);
 
                 //Fire successful attempt
+                $this->fireValidatedEvent($user);
                 $this->fireAuthenticatedEvent($user);
 
                 if ((!empty($this->challengeName)) && config('cognito.force_password_change_web')) {
                     switch ($this->challengeName) {
                         case AwsCognitoClient::NEW_PASSWORD_CHALLENGE:
                         case AwsCognitoClient::RESET_REQUIRED_PASSWORD:
+
                             return redirect(route(config('cognito.force_redirect_route_name')))
                                 ->with('success', true)
                                 ->with('force', true)
@@ -148,6 +162,16 @@ class CognitoSessionGuard extends SessionGuard implements StatefulGuard
                             break;
                     } //End switch
                 } //End if
+
+                //Create Claim for confirmed users and store into session
+                if (!empty($this->awsResult)) {
+                    //Create claim token
+                    $claim = new AwsCognitoClaim($this->awsResult, $user, $credentials[$this->keyUsername]);
+
+                    //Get Session and store details
+                    $session = $this->getSession();
+                    $session->put('claim', json_decode(json_encode($claim), true));
+                } //End if 
 
                 return true;
             } //End if
